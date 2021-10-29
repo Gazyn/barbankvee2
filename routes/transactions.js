@@ -6,7 +6,7 @@ const Bank = require('../models/Bank');
 const {verifyToken, refreshBanksFromCentralBank} = require("../middlewares");
 const {JWK, JWS} = require('node-jose')
 const {join} = require('path')
-const {verifySignature, getPublicKey} = require("../crypto")
+const {verifySignature, getPublicKey, getKeystore} = require("../crypto")
 const base64url = require('base64url');
 const Buffer = require('buffer/').Buffer;
 
@@ -109,9 +109,8 @@ async function creditAccount(account, amount) {
 router.get('/jwks', async function (req, res) {
 
     // Add our private key from file to the keystore
-    console.log('/jwks: Reading keystore from json file into memory')
-    const keystoreAsJsonString = fs.readFileSync(join('.cert', 'keystore.json')).toString();
-    const keystore = await JWK.asKeyStore(keystoreAsJsonString)
+    console.log('/jwks: Reading keystore from json file into memory');
+    const keystore = await getKeystore();
 
     // Return our keystore (only the public key derived from the imported private key) in JWKS (JSON Web Key Set) format
     console.log('/jwks: Returning keystore without private key')
@@ -153,7 +152,7 @@ router.post('/b2b', async function (req, res) {
     const accountFromBankPrefix = payload.accountFrom.substring(0, 3)
 
     // Find source bank (document)
-    const accountFromBank = await Bank.findOne({bankPrefix: accountFromBankPrefix})
+    const accountFromBank = await Bank.findOne({bankPrefix: accountFromBankPrefix});
 
     if (!accountFromBank) {
 
@@ -162,7 +161,15 @@ router.post('/b2b', async function (req, res) {
         if (typeof result.error !== 'undefined') {
 
             // 500
-            return res.status(500).send({error: "refreshBanksFromCentralBank: " + result.error}) //
+            return res.status(500).send({error: "refreshBanksFromCentralBank: " + result.error})
+        }
+
+        //After successfully refreshing banks from central bank, fetch source bank again
+        accountFromBank = await Bank.findOne({bankPrefix: accountFromBankPrefix});
+
+        if(!accountFromBank) {
+            // 400 Unknown source bank
+            return res.status(400).send({error: "Unknown sending bank error"})
         }
     }
 

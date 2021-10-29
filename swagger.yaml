@@ -1,347 +1,395 @@
 openapi: 3.0.2
 info:
-  title: barbankvee2
-  version: 1.0.0
+    title: barbankvee2
+    version: 1.0.0
 paths:
-  /users:
-    summary: Path used to manage the list of users.
-    description: >-
-      The REST endpoint/path used to list and create zero or more `user` entities.  This path contains a
-      `GET` and `POST` operation to perform the list and create tasks, respectively.
-    post:
-      requestBody:
-        description: A new `user` to be created.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/user'
-        required: true
-      tags:
-        - users
-      responses:
-        '201':
-          description: Successful response.
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Parameter missing:
-                  value:
-                    error: >-
-                      user validation failed: (?<parameterName>[^:]+): Path
-                      `(?<parameterNameAgain>[^`]+)` is required.(, ([^:]+): Path
-                      `([^`]+)` is required.){0,2}
-          description: Parameter missing
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Username already exists:
-                  value:
-                    error: Username already exists
-          description: Username already exists
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Parameter(s) value too short/long:
-                  value:
-                    error: >-
-                      Path `(?<parameterName>.+)` \(`(?<sampleValue>.+)`\) is
-                      (longer|shorter) than the (maximum|minimum) allowed length
-                      \((?<requiredLength>\d+)\)
-          description: Parameter(s) value too short/long
-      operationId: createuser
-      summary: Create a user
-      description: Creates a new instance of a `user`.
-  /sessions:
-    summary: Path used to manage the list of sessions.
-    description: >-
-      The REST endpoint/path used to list and create zero or more `session` entities.  This path
-      contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
-    post:
-      requestBody:
-        description: A new `session` to be created.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/user'
-            examples:
-              POST /sessions request:
-                value:
-                  username: man
-                  password: qwertqwetqwert
-        required: true
-      tags:
-        - sessions
-      responses:
-        '201':
-          description: Successful response.
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Required parameter missing:
-                  value:
-                    error: Required parameter missing
-          description: Required parameter missing
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Invalid credentials:
-                  value:
-                    error: Invalid credentials
-          description: Invalid credentials
-      operationId: createsession
-      summary: Create a session
-      description: Creates a new instance of a `session`.
-    delete:
-      tags:
-        - sessions
-      responses:
-        '204':
-          description: Session successfully deleted
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Invalid authorization format:
-                  value:
-                    error: Invalid authorization format
-          description: Bad request
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Missing authorization:
-                  value:
-                    error: Missing authorization
-                Invalid token:
-                  value:
-                    error: Invalid token
-          description: Problem with authorization
-      security:
-        -
-          Bearer: []
-      summary: Delete a `session`
-      description: Deletes `session` with an id specified in authorization header.
-  /users/current:
-    get:
-      tags:
-        - users
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/user'
-              examples:
-                GET /users/current response:
-                  value:
-                    accounts:
-                      -
-                        account_number: EE570564119
-                        balance: 10000
-                        currency: euro
-                        name: Main
-                        userId: 61670a7842bf443591d63442
-                    name: MikiHiir
-                    username: Miki
-          description: Successful request
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Invalid authorization format:
-                  value:
-                    error: Invalid authorization format
-          description: Bad request
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Missing authorization:
-                  value:
-                    error: Missing authorization
-                Invalid token:
-                  value:
-                    error: Invalid token
-          description: Unauthorized
-      security:
-        -
-          Bearer: []
-      summary: Get current user data
-      description: Returns current 'user' data
-  /transactions:
-    summary: Path used to manage the list of transactions.
-    description: >-
-      The REST endpoint/path used to list and create zero or more `transaction` entities.  This path
-      contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
-    post:
-      requestBody:
-        description: A new `transaction` to be created.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/transaction'
-        required: true
-      tags:
-        - transactions
-      responses:
-        '201':
-          description: Successful response.
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Invalid amount:
-                  value:
-                    error: Invalid amount
-                Invalid authorization format:
-                  value:
-                    error: Invalid authorization format
-          description: Bad request
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Missing authorization:
-                  value:
-                    error: Missing authorization
-                Invalid token:
-                  value:
-                    error: Invalid token
-          description: Missing authorization
-        '402':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Insufficient funds:
-                  value:
-                    error: Insufficient funds
-          description: Insufficient funds
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Account from belongs to another user:
-                  value:
-                    error: Account from belongs to another user
-          description: Forbidden
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-              examples:
-                Invalid or nonexistent account:
-                  value:
-                    error: Invalid or nonexistent account
-                Destination bank not found:
-                  value:
-                    error: Destination bank not found
-          description: Not found
-      security:
-        -
-          Bearer: []
-      operationId: createtransaction
-      summary: Create a transaction
-      description: Creates a new instance of a `transaction`.
+    /users:
+        summary: Path used to manage the list of users.
+        description: >-
+            The REST endpoint/path used to list and create zero or more `user` entities.  This path contains a
+            `GET` and `POST` operation to perform the list and create tasks, respectively.
+        post:
+            requestBody:
+                description: A new `user` to be created.
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/user'
+                required: true
+            tags:
+                - users
+            responses:
+                '201':
+                    description: Successful response.
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Parameter missing:
+                                    value:
+                                        error: >-
+                                            user validation failed: (?<parameterName>[^:]+): Path
+                                            `(?<parameterNameAgain>[^`]+)` is required.(, ([^:]+): Path
+                                            `([^`]+)` is required.){0,2}
+                    description: Parameter missing
+                '409':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Username already exists:
+                                    value:
+                                        error: Username already exists
+                    description: Username already exists
+                '422':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Parameter(s) value too short/long:
+                                    value:
+                                        error: >-
+                                            Path `(?<parameterName>.+)` \(`(?<sampleValue>.+)`\) is
+                                            (longer|shorter) than the (maximum|minimum) allowed length
+                                            \((?<requiredLength>\d+)\)
+                    description: Parameter(s) value too short/long
+            operationId: createuser
+            summary: Create a user
+            description: Creates a new instance of a `user`.
+    /sessions:
+        summary: Path used to manage the list of sessions.
+        description: >-
+            The REST endpoint/path used to list and create zero or more `session` entities.  This path
+            contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
+        post:
+            requestBody:
+                description: A new `session` to be created.
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/user'
+                        examples:
+                            POST /sessions request:
+                                value:
+                                    username: man
+                                    password: qwertqwetqwert
+                required: true
+            tags:
+                - sessions
+            responses:
+                '201':
+                    description: Successful response.
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Required parameter missing:
+                                    value:
+                                        error: Required parameter missing
+                    description: Required parameter missing
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Invalid credentials:
+                                    value:
+                                        error: Invalid credentials
+                    description: Invalid credentials
+            operationId: createsession
+            summary: Create a session
+            description: Creates a new instance of a `session`.
+        delete:
+            tags:
+                - sessions
+            responses:
+                '204':
+                    description: Session successfully deleted
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Invalid authorization format:
+                                    value:
+                                        error: Invalid authorization format
+                    description: Bad request
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Missing authorization:
+                                    value:
+                                        error: Missing authorization
+                                Invalid token:
+                                    value:
+                                        error: Invalid token
+                    description: Problem with authorization
+            security:
+                -
+                    Bearer: []
+            summary: Delete a `session`
+            description: Deletes `session` with an id specified in authorization header.
+    /users/current:
+        get:
+            tags:
+                - users
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user'
+                            examples:
+                                GET /users/current response:
+                                    value:
+                                        accounts:
+                                            -
+                                                account_number: EE570564119
+                                                balance: 10000
+                                                currency: euro
+                                                name: Main
+                                                userId: 61670a7842bf443591d63442
+                                        name: MikiHiir
+                                        username: Miki
+                    description: Successful request
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Invalid authorization format:
+                                    value:
+                                        error: Invalid authorization format
+                    description: Bad request
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Missing authorization:
+                                    value:
+                                        error: Missing authorization
+                                Invalid token:
+                                    value:
+                                        error: Invalid token
+                    description: Unauthorized
+            security:
+                -
+                    Bearer: []
+            summary: Get current user data
+            description: Returns current 'user' data
+    /transactions:
+        summary: Path used to manage the list of transactions.
+        description: >-
+            The REST endpoint/path used to list and create zero or more `transaction` entities.  This path
+            contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
+        post:
+            requestBody:
+                description: A new `transaction` to be created.
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/transaction'
+                required: true
+            tags:
+                - transactions
+            responses:
+                '201':
+                    description: Successful response.
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Invalid amount:
+                                    value:
+                                        error: Invalid amount
+                                Invalid authorization format:
+                                    value:
+                                        error: Invalid authorization format
+                    description: Bad request
+                '401':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Missing authorization:
+                                    value:
+                                        error: Missing authorization
+                                Invalid token:
+                                    value:
+                                        error: Invalid token
+                    description: Missing authorization
+                '402':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Insufficient funds:
+                                    value:
+                                        error: Insufficient funds
+                    description: Insufficient funds
+                '403':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Account from belongs to another user:
+                                    value:
+                                        error: Account from belongs to another user
+                    description: Forbidden
+                '404':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Invalid or nonexistent account:
+                                    value:
+                                        error: Invalid or nonexistent account
+                                Destination bank not found:
+                                    value:
+                                        error: Destination bank not found
+                    description: Not found
+            security:
+                -
+                    Bearer: []
+            operationId: createtransaction
+            summary: Create a transaction
+            description: Creates a new instance of a `transaction`.
+    /transactions/b2b:
+        summary: Path used to manage the list of transactions.
+        description: >-
+            The REST endpoint/path used to list and create zero or more `transaction` entities.  This path
+            contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
+        post:
+            requestBody:
+                description: A new `transaction` to be created.
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/transaction'
+                required: true
+            tags:
+                - transactions
+            responses:
+                '400':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                Missing parameter:
+                                    value:
+                                        error: Missing parameter X in JWT
+                                Invalid parameter type:
+                                    value:
+                                        error: X is of type Y but expected it to be type string in JWT
+                                Unknown source bank:
+                                    value:
+                                        error: Unknown sending bank error
+                    description: Bad Request
+                '500':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/error'
+                            examples:
+                                500 Failed refreshing banks:
+                                    value:
+                                        error: 'refreshBanksFromCentralBank: result.error'
+                    description: Internal Server Error
+            security:
+                -
+                    Bearer: []
+            operationId: createtransactionb2b
+            summary: Create a transaction
+            description: Creates a new instance of a `transaction`.
 components:
-  schemas:
-    user:
-      title: Root Type for user
-      description: ''
-      type: object
-      properties:
-        username:
-          type: string
-        password:
-          type: string
-        name:
-          type: string
-      example:
-        username: miki
-        password: qwertyqwerty
-        name: Miki Hiir
-    error:
-      title: Root Type for error
-      description: ''
-      type: object
-      properties:
+    schemas:
+        user:
+            title: Root Type for user
+            description: ''
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+                name:
+                    type: string
+            example:
+                username: miki
+                password: qwertyqwerty
+                name: Miki Hiir
         error:
-          type: string
-      example:
-        error: some text
-    session:
-      title: Root Type for session
-      description: ''
-      type: object
-      properties:
-        token:
-          type: string
-      example:
-        token: 6160380bb79c71cb7891db08
-    transaction:
-      title: Root Type for transaction
-      description: ''
-      type: object
-      properties:
-        accountFrom:
-          type: string
-        accountTo:
-          type: string
-        amount:
-          format: int32
-          type: integer
-        currency:
-          type: string
-        explanation:
-          type: string
-      example:
-        accountFrom: EE570564119
-        accountTo: EE187012379
-        amount: 50
-        currency: EUR
-        explanation: test
-  securitySchemes:
-    Bearer:
-      scheme: bearer
-      type: http
+            title: Root Type for error
+            description: ''
+            type: object
+            properties:
+                error:
+                    type: string
+            example:
+                error: some text
+        session:
+            title: Root Type for session
+            description: ''
+            type: object
+            properties:
+                token:
+                    type: string
+            example:
+                token: 6160380bb79c71cb7891db08
+        transaction:
+            title: Root Type for transaction
+            description: ''
+            type: object
+            properties:
+                accountFrom:
+                    type: string
+                accountTo:
+                    type: string
+                amount:
+                    format: int32
+                    type: integer
+                currency:
+                    type: string
+                explanation:
+                    type: string
+            example:
+                accountFrom: EE570564119
+                accountTo: EE187012379
+                amount: 50
+                currency: EUR
+                explanation: test
+    securitySchemes:
+        Bearer:
+            scheme: bearer
+            type: http
 tags:
-  -
-    name: users
-    description: ''
-  -
-    name: sessions
-    description: ''
-  -
-    name: transactions
-    description: ''
+    -
+        name: users
+        description: ''
+    -
+        name: sessions
+        description: ''
+    -
+        name: transactions
+        description: ''

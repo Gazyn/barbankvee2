@@ -76,6 +76,22 @@ exports.refreshBanksFromCentralBank = async () => {
     }
 }
 
+async function sendRequest(method, url, data) {
+    if(method=="post") {
+        axios.post(url, data).then(res => {return JSON.parse(res)})
+    } else {
+        axios.get(url).then(res => {return JSON.parse(res)})
+    }
+}
+
+async function sendPostRequest(url, data) {
+    return await sendRequest('post', url, data);
+}
+
+async function sendRequestToBank(destinationBank, transactionAsJwt) {
+    return await sendPostRequest(destinationBank.transactionUrl, {jwt: transactionAsJwt});
+}
+
 exports.processTransactions = async () => {
 
     // Get pending transactions
