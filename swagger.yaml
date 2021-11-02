@@ -15,6 +15,17 @@ paths:
                     application/json:
                         schema:
                             $ref: '#/components/schemas/user'
+                        examples:
+                            user1:
+                                value:
+                                    username: user1
+                                    password: password
+                                    name: user1
+                            user2:
+                                value:
+                                    username: user2
+                                    password: password
+                                    name: user2
                 required: true
             tags:
                 - users
@@ -73,15 +84,30 @@ paths:
                         schema:
                             $ref: '#/components/schemas/user'
                         examples:
-                            POST /sessions request:
+                            user1:
                                 value:
-                                    username: man
-                                    password: qwertqwetqwert
+                                    username: user1
+                                    password: password
+                            user2:
+                                value:
+                                    username: user2
+                                    password: password
                 required: true
             tags:
                 - sessions
             responses:
                 '201':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/session'
+                            examples:
+                                user1:
+                                    value:
+                                        token: 61812791222884bc65c7a34a
+                                user2:
+                                    value:
+                                        token: 618127c6222884bc65c7a382
                     description: Successful response.
                 '400':
                     content:
@@ -203,6 +229,13 @@ paths:
                     application/json:
                         schema:
                             $ref: '#/components/schemas/transaction'
+                        examples:
+                            user1 to user2:
+                                value:
+                                    accountFrom: bf6392472362
+                                    accountTo: bf6375804066
+                                    amount: 10
+                                    explanation: some explanation
                 required: true
             tags:
                 - transactions

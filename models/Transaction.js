@@ -12,6 +12,7 @@ module.exports = mongoose.model('Transaction', new mongoose.Schema({
     senderName: {type: String, default: ''},
     receiverName: {type: String, default: ''}
 }, {
+    timestamps:true,
     toJSON: {
         transform: function (doc, ret) {
             delete ret._id;

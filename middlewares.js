@@ -5,6 +5,7 @@ const axios = require('axios');
 const jose = require('node-jose');
 const Transaction = require('./models/Transaction');
 const {JWS} = require("node-jose");
+const {createSignedTransaction}= require("./crypto")
 exports.verifyToken = async function (req, res, next) {
 
     // Check Authorization header existence
@@ -78,9 +79,9 @@ exports.refreshBanksFromCentralBank = async () => {
 
 async function sendRequest(method, url, data) {
     if(method=="post") {
-        axios.post(url, data).then(res => {return JSON.parse(res)})
+        axios.post(url, data).then(res => {console.log(res)})
     } else {
-        axios.get(url).then(res => {return JSON.parse(res)})
+        axios.get(url).then(res => {return JSON.parse(res.body)})
     }
 }
 
