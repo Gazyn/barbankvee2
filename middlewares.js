@@ -4,8 +4,9 @@ const Bank = require('./models/Bank');
 const axios = require('axios');
 const jose = require('node-jose');
 const Transaction = require('./models/Transaction');
-const {JWS} = require("node-jose");
-const {createSignedTransaction}= require("./crypto")
+const { JWS } = require("node-jose");
+const { createSignedTransaction } = require("./crypto");
+
 exports.verifyToken = async function (req, res, next) {
 
     // Check Authorization header existence
@@ -58,6 +59,7 @@ exports.refreshBanksFromCentralBank = async () => {
         await Bank.deleteMany()
 
         // Insert new data into banks
+        /*
         for (let bank of response.data) {
 
             await new Bank({
@@ -68,29 +70,38 @@ exports.refreshBanksFromCentralBank = async () => {
                 jwksUrl: bank.jwksUrl
             }).save()
         }
+        */
+
+        await new Bank({
+            name: "barbankvee2",
+            transactionUrl: "http://127.0.0.1:3000/transactions/b2b",
+            bankPrefix: "dx6",
+            owners: "mina",
+            jwksUrl: "http://127.0.0.1:3000/jwks"
+        }).save()
+
+        await new Bank({
+            name: "barbankvee3",
+            transactionUrl: "http://127.0.0.1:3001/transactions/b2b",
+            bankPrefix: "dx7",
+            owners: "sina",
+            jwksUrl: "http://127.0.0.1:3001/jwks"
+        }).save()
 
         // Return true
         return true
     } catch (e) {
         // Return exception message on error
-        return {error: typeof e.response.data === 'undefined' ? JSON.stringify(e):JSON.stringify(e.response.data)};
+        return {error: typeof e.response.data === 'undefined' ? JSON.stringify(e) : JSON.stringify(e.response.data)};
     }
 }
 
-async function sendRequest(method, url, data) {
-    if(method=="post") {
-        axios.post(url, data).then(res => {console.log(res)})
-    } else {
-        axios.get(url).then(res => {return JSON.parse(res.body)})
+exports.sendRequestToBank = async (destinationBank, transactionAsJwt) => {
+    try {
+        return await axios.post(destinationBank.transactionUrl, {jwt: transactionAsJwt}).data;
+    } catch(e) {
+        console.log("error with sendRequestToBank");
     }
-}
-
-async function sendPostRequest(url, data) {
-    return await sendRequest('post', url, data);
-}
-
-async function sendRequestToBank(destinationBank, transactionAsJwt) {
-    return await sendPostRequest(destinationBank.transactionUrl, {jwt: transactionAsJwt});
 }
 
 exports.processTransactions = async () => {
@@ -149,7 +160,7 @@ exports.processTransactions = async () => {
             const response = await sendRequestToBank(bankTo, await createSignedTransaction({
                 accountFrom: transaction.accountFrom,
                 accountTo: transaction.accountTo,
-                amount: transaction.amount,
+                amount: String(transaction.amount),
                 currency: transaction.currency,
                 explanation: transaction.explanation,
                 senderName: transaction.senderName

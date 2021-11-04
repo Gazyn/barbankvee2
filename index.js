@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const app = express()
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('js-yaml');
-const fs   = require('fs');
+const fs = require('fs');
 const {processTransactions} = require("./middlewares");
 
 // Get document, or throw exception on error

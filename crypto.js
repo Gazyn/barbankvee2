@@ -1,11 +1,11 @@
-const {JWK, JWS} = require('node-jose')
-const fs = require('fs')
-const {join} = require('path')
-const jwkToPem = require('jwk-to-pem')
-const jwt = require('jsonwebtoken')
-const {sendGetRequest} = require("./middlewares")
-const certDir = '.cert'
-const keystoreFile = join(certDir, 'keystore.json')
+const {JWK, JWS} = require('node-jose');
+const fs = require('fs');
+const {join} = require('path');
+const axios = require('axios');
+const jwkToPem = require('jwk-to-pem');
+const jwt = require('jsonwebtoken');
+const certDir = '.cert';
+const keystoreFile = join(certDir, 'keystore.json');
 
 exports.getKeystore = async function () {
     const keystore = JWK.createKeyStore();
@@ -18,7 +18,6 @@ exports.getKeystore = async function () {
         fs.writeFileSync(keystoreFile, JSON.stringify(keystore.toJSON(true)))
         return keystore;
     } else {
-        console.log('Import keystore')
         const ks = fs.readFileSync(join('.cert', 'keystore.json'))
         return await JWK.asKeyStore(ks.toString())
     }
@@ -56,7 +55,11 @@ exports.verifySignature = async function (jwtString, publicKey) {
 }
 
 exports.getPublicKey = async function (jwksUrl) {
-    const jwks = await sendGetRequest(jwksUrl);
-    const signingKey = await exports.getSigningKey();
-    return jwkToPem(signingKey.toJSON())
+    try {
+        //const jwks = await axios.get(jwksUrl).data;
+        const signingKey = await exports.getSigningKey();
+        return jwkToPem(signingKey.toJSON())
+    } catch(e) {
+        console.log("error with getPublicKey");
+    }
 }

@@ -3,10 +3,11 @@ const router = require('express').Router();
 const Account = require('../models/Account');
 const Transaction = require('../models/Transaction');
 const Bank = require('../models/Bank');
-const {verifyToken, refreshBanksFromCentralBank} = require("../middlewares");
-const {JWK, JWS} = require('node-jose')
-const {join} = require('path')
-const {verifySignature, getPublicKey, getKeystore} = require("../crypto")
+const User = require('../models/User');
+const { verifyToken, refreshBanksFromCentralBank } = require("../middlewares");
+const { JWK, JWS } = require('node-jose');
+const { join } = require('path');
+const { verifySignature, getPublicKey, getKeystore } = require("../crypto");
 const base64url = require('base64url');
 const Buffer = require('buffer/').Buffer;
 
@@ -68,6 +69,8 @@ module.exports = router.post('/', verifyToken, async (req, res) => {
             }
         }
 
+        const user = await User.findOne({_id: req.userId});
+
         // Create transaction into database.
         await new Transaction({
             accountFrom: req.body.accountFrom,
@@ -75,6 +78,7 @@ module.exports = router.post('/', verifyToken, async (req, res) => {
             amount: req.body.amount,
             currency: accountFrom.currency,
             explanation: req.body.explanation,
+            senderName: user.name,
             statusDetails: statusDetails
         }).save();
 
@@ -102,6 +106,9 @@ async function debitAccount(account, amount) {
 
 // Plonks money
 async function creditAccount(account, amount) {
+    if(typeof amount !== "number") {
+        throw "not a number"
+    }
     account.balance += amount
     await account.save();
 }
@@ -129,30 +136,33 @@ async function convertCurrency(payload, accountTo) {
 }
 
 router.post('/b2b', async function (req, res) {
-    try {
-        const components = req.body.jwt.split('.')
-        const payload = JSON.parse(base64url.decode(components[1]))
-        const accountTo = await Account.findOne({number: payload.accountTo})
-    } catch (e) {
-
-        // 500 - Internal server error
-        return res.status(500).send({error: e.message})
-    }
+    const components = req.body.jwt.split('.');
+    const payload = JSON.parse(base64url.decode(components[1]));
+    const accountTo = await Account.findOne({account_number: payload.accountTo});
+    const key = { //Define what each field's type must be
+        accountFrom: "string",
+        accountTo: "string",
+        amount: "number",
+        currency: "string",
+        explanation: "string",
+        senderName: "string"
+    };
+    /*
+    Object.keys(key).forEach(function (parameter) {
+        if (!payload[parameter]) {
+            return res.status(400).send({error: 'Missing parameter ' + parameter + ' in JWT'});
+        }
+        if (typeof payload[parameter] !== key[parameter]) {
+            return res.status(400).send({error: parameter + ' is of type ' + typeof payload[parameter] + ' but expected it to be type '+key[parameter]+' in JWT'});
+        }
+    });
+    */
 
     // Get source bank prefix
-    ["accountFrom", "accountTo", "amount", "currency", "explanation", "senderName"].forEach(function (parameter) {
-        if (!payload[parameter]) {
-            return res.status(400).send({error: 'Missing parameter ' + parameter + ' in JWT'})
-        }
-        if (typeof payload[parameter] !== 'string') {
-            return res.status(400).send({error: parameter + ' is of type ' + typeof payload[parameter] + ' but expected it to be type string in JWT'})
-        }
-    })
-
-    const accountFromBankPrefix = payload.accountFrom.substring(0, 3)
+    const accountFromBankPrefix = payload.accountFrom.substring(0, 3);
 
     // Find source bank (document)
-    const accountFromBank = await Bank.findOne({bankPrefix: accountFromBankPrefix});
+    let accountFromBank = await Bank.findOne({bankPrefix: accountFromBankPrefix});
 
     if (!accountFromBank) {
 
@@ -161,7 +171,7 @@ router.post('/b2b', async function (req, res) {
         if (typeof result.error !== 'undefined') {
 
             // 500
-            return res.status(500).send({error: "refreshBanksFromCentralBank: " + result.error})
+            return res.status(500).send({error: "refreshBanksFromCentralBank: " + result.error});
         }
 
         //After successfully refreshing banks from central bank, fetch source bank again
@@ -169,24 +179,29 @@ router.post('/b2b', async function (req, res) {
 
         if(!accountFromBank) {
             // 400 Unknown source bank
-            return res.status(400).send({error: "Unknown sending bank error"})
+            return res.status(400).send({error: "Unknown sending bank error"});
         }
     }
 
     // Validate signature
     try {
-        const publicKey = await getPublicKey(accountFromBank.jwksUrl)
+        const publicKey = await getPublicKey(accountFromBank.jwksUrl);
         await verifySignature(req.body.jwt, publicKey);
     } catch (e) {
 
         // 400 - Bad request
-        return res.status(400).send({error: 'Signature verification failed: ' + e.message})
+        return res.status(400).send({error: 'Signature verification failed: ' + e.message});
     }
 
-    let amount = await convertCurrency(payload, accountTo)
+    let amount = await convertCurrency(payload, accountTo);
 
-    const accountToOwner = await User.findOne({_id: accountTo.userId})
+    const accountToOwner = await User.findOne({_id: accountTo.userId});
 
     //money laundering
-    await creditAccount(accountTo, req.body.amount)
+    console.log(payload);
+    try {
+        await creditAccount(accountTo, payload.amount);
+    } catch(e) {
+        console.log("not a number");
+    }
 })
